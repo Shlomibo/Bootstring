@@ -18,6 +18,7 @@ export class MappedAlphabet implements Alphabet {
 		mapping,
 	}: MappedAlphabetParams) {
 		this.#base = base
+
 		const reverseMapping = Object.fromEntries(
 			Object.entries(mapping)
 				.map(([baseChar, outputChar]) => [outputChar, baseChar])
@@ -33,10 +34,6 @@ export class MappedAlphabet implements Alphabet {
 		}
 
 		if (Object.keys(this.#mapping).length !== Object.keys(this.#reverseMapping).length) {
-			console.log({
-				m: this.#mapping,
-				rm: this.#reverseMapping
-			})
 			throw new Error('Mapped keys must have 1-1 correspondence')
 		}
 	}
