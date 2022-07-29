@@ -3,10 +3,12 @@ import { BootstringParams, CodepointsString } from './common'
 
 export interface EncodeParams extends BootstringParams {
 	string: CodepointsString
+	getCodepoint: (digit: number) => number
 }
 
 export function encode({
 	string,
+	getCodepoint,
 
 	...bootstringParams
 }: EncodeParams): CodepointsString {
@@ -106,7 +108,7 @@ export function encode({
 					}
 
 					// output the code point for digit t + ((q - t) mod (base - t))
-					output.push(t + ((q - t) % (base - t)))
+					output.push(getCodepoint(t + ((q - t) % (base - t))))
 
 					// let q = (q - t) div (base - t)
 					q = Math.floor((q - t) / (base - t))
@@ -115,7 +117,7 @@ export function encode({
 				}
 
 				// output the code point for digit q
-				output.push(q)
+				output.push(getCodepoint(q))
 
 				// let bias = adapt(delta, h + 1, test h equals b?)
 				bias = adaptBias({

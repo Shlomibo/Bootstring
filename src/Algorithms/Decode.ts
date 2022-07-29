@@ -3,10 +3,12 @@ import { BootstringParams, CodepointsString } from './common'
 
 export interface DecodeParams extends BootstringParams {
 	string: CodepointsString
+	getDigit: (codepoint: number) => number
 }
 
 export function decode({
 	string,
+	getDigit,
 
 	...bootstringParams
 }: DecodeParams): CodepointsString {
@@ -76,7 +78,7 @@ export function decode({
 			}
 
 			// let digit = the code point's digit-value, fail if it has none
-			let digit = ch
+			let digit = getDigit(ch)
 
 			// let i = i + digit * w, fail on overflow
 			i += digit * w
