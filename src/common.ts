@@ -4,9 +4,11 @@ export interface Alphabet extends Iterable<string> {
 	indexOf(char: string): number
 }
 
+export type DigitVariants = string[]
+
 export interface NthBase {
 	readonly base: number
-	readonly digits: readonly string[]
+	readonly digits: readonly DigitVariants[]
 	readonly values: Readonly<Record<string, number>>
 }
 
@@ -14,10 +16,12 @@ export class SimpleNthBase implements NthBase {
 	public readonly values: Readonly<Record<string, number>>
 
 	public constructor(
-		public readonly digits: readonly string[]
+		public readonly digits: readonly DigitVariants[]
 	) {
 		this.values = Object.fromEntries(
-			digits.map((digit, value) => [digit, value])
+			digits.flatMap((digits, value) =>
+				digits.map(digit => [digit, value]
+				))
 		)
 	}
 

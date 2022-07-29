@@ -80,7 +80,7 @@ export class Bootstring {
 			throw new Error('Invalid digit')
 		}
 
-		return this.#base.digits[digit].codePointAt(0)!
+		return this.#base.digits[digit][0].codePointAt(0)!
 	}
 
 	readonly #getDigit = (codepoint: number): number => {
