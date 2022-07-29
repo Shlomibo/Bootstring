@@ -1,8 +1,8 @@
 import { Alphabet } from './common'
 
 export interface UnicodeSubsetAlphabetParams {
-	start?: number
-	end?: number
+	start?: number | string
+	end?: number | string
 }
 
 const UNICODE_MAX = 0x10FFFF
@@ -23,18 +23,30 @@ export class UnicodeSubsetAlphabet implements Alphabet {
 		start = 0,
 		end = UNICODE_MAX,
 	}: UnicodeSubsetAlphabetParams = {}) {
-		this.#start = start
-		this.#end = end
-
-		let length = end - start + 1
-
-		if (start <= UTF16_SURROGATES_START && end >= UTF16_SURROGATES_START) {
-			length -= Math.min(end, UTF16_SURROGATES_END) - UTF16_SURROGATES_START
+		if (typeof start === 'number') {
+			this.#start = start
+		}
+		else if (start.length === 0) {
+			throw new Error('Invalid start string')
+		}
+		else {
+			this.#start = start.codePointAt(0)!
 		}
 
-		if (start <= UTF16_SURROGATES_END && end >= UTF16_SURROGATES_END) {
-			length -= UTF16_SURROGATES_END - Math.max(start, UTF16_SURROGATES_START)
+		if (typeof end === 'number') {
+			this.#end = end
 		}
+		else if (end.length === 0) {
+			throw new Error('Invalid end string')
+		}
+		else {
+			this.#end = end.codePointAt(0)!
+		}
+
+		let length = this.#end - this.#start + 1 - diffFromCodepoint(
+			this.#end - this.#start,
+			this.#start
+		)
 
 		this.length = length
 	}
@@ -55,7 +67,10 @@ export class UnicodeSubsetAlphabet implements Alphabet {
 			? codepoint - UTF16_SURROGATES_COUNT
 			: codepoint
 
-		return zeroIndex - this.#start
+		const result = zeroIndex - this.#start
+		return result < 0 || result > this.#end
+			? -1
+			: result
 	}
 
 	public *[Symbol.iterator]() {
@@ -71,4 +86,20 @@ export class UnicodeSubsetAlphabet implements Alphabet {
 			yield String.fromCodePoint(i)
 		}
 	}
+
+	public has(char: string): boolean {
+		const codepoint = char.codePointAt(0)!
+		const index = codepoint - diffFromCodepoint(codepoint, this.#start)
+
+		return index >= this.#start &&
+			index <= this.#end
+	}
+}
+
+function diffFromCodepoint(index: number, start: number): number {
+	const offsetIndex = index + start
+
+	return offsetIndex < UTF16_SURROGATES_START
+		? 0
+		: Math.min(offsetIndex, UTF16_SURROGATES_END + 1) - UTF16_SURROGATES_START
 }

@@ -13,11 +13,13 @@ export interface BootstringParams {
 	initialN: number
 	delimiter: number
 	baseAlphabetSize: number
+	isBasicCharacter: (ch: number) => boolean
 }
 
 export function validateParams({
 	delimiter,
 	base,
+	isBasicCharacter,
 	baseAlphabetSize,
 	tmin,
 	tmax,
@@ -29,10 +31,11 @@ export function validateParams({
 	if (
 		!Number.isInteger(delimiter) ||
 		delimiter < 0 ||
-		delimiter >= baseAlphabetSize
+		!isBasicCharacter(delimiter)
 	) {
 		throw new Error(`Invalid delimiter.
-Must be an integer greater than 0 and below the base characters limit.`)
+Must be an integer greater than 0 and below the base characters limit.
+Delimiter: ${delimiter}`)
 	}
 
 	// The base cannot be greater than the number of distinguishable basic code points remaining.

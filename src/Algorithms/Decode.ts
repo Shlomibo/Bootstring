@@ -16,7 +16,7 @@ export function decode({
 		initialN,
 		initialBias,
 		delimiter,
-		baseAlphabetSize,
+		isBasicCharacter,
 		base,
 		tmin,
 		tmax,
@@ -44,7 +44,7 @@ export function decode({
 				break
 			}
 
-			if (ch >= baseAlphabetSize) {
+			if (!isBasicCharacter(ch)) {
 				throw new Error('Invalid bootstring string. Got an extended character instead of basic one.' +
 					`Code point: ${ch}; index ${i}`)
 			}
@@ -71,7 +71,7 @@ export function decode({
 		// for k = base to infinity in steps of base do begin
 		for (let k = base; true; k += base) {
 			// consume a code point, or fail if there was none to consume
-			const ch = string.shift()
+			const ch = string.pop()
 
 			if (ch === undefined) {
 				throw new Error('Failed to get a character')
@@ -117,7 +117,7 @@ export function decode({
 		})
 
 		// let n = n + i div (length(output) + 1), fail on overflow
-		n += Math.floor(i / output.length + 1)
+		n += Math.trunc(i / (output.length + 1))
 
 		if (!Number.isSafeInteger(n)) {
 			throw new Error('Overflow')
@@ -127,7 +127,7 @@ export function decode({
 		i %= output.length + 1
 
 		// {if n is a basic code point then fail}
-		if (n < baseAlphabetSize) {
+		if (isBasicCharacter(n)) {
 			throw new Error('Invalid bootstring string. Got a basic character instead of an extended one.' +
 				`Code point: ${n}`)
 		}

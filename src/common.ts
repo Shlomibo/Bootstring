@@ -2,6 +2,7 @@ export interface Alphabet extends Iterable<string> {
 	length: number
 	getAt(index: number): string
 	indexOf(char: string): number
+	has(char: string): boolean
 }
 
 export type DigitVariants = string[]

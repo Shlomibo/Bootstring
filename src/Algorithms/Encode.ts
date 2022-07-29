@@ -16,7 +16,7 @@ export function encode({
 		initialN,
 		initialBias,
 		delimiter,
-		baseAlphabetSize,
+		isBasicCharacter,
 		base,
 		tmin,
 		tmax,
@@ -38,12 +38,12 @@ export function encode({
 	let output: CodepointsString = []
 
 	for (const { ch, i } of string.map((ch, i) => ({ ch, i }))) {
-		if (ch < baseAlphabetSize) {
+		if (isBasicCharacter(ch)) {
 			h++
 			output.push(ch)
 		}
 		else if (ch < n) {
-			throw new Error(`Invalid character endpoint ${ch} at index ${i}.`)
+			throw new Error(`Invalid character codepoint ${ch} at index ${i}.`)
 		}
 	}
 
@@ -66,7 +66,6 @@ export function encode({
 		m = m === Infinity
 			? n
 			: m
-
 
 		// let delta = delta + (m - n) * (h + 1), fail on overflow
 		delta += (m - n) * (h + 1)

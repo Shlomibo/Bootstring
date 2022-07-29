@@ -1,4 +1,4 @@
-bail: true
+bail: false
 recursive: true
 spec: "src/**/*.spec.ts"
 require:

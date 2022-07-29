@@ -39,9 +39,26 @@ export class Bootstring {
 			baseAlphabetSize: basicAlphabet.length,
 			tmin: tMin,
 			tmax: tMax,
-			initialN: initialN ?? this.#basicAlphabet.length + 1,
+			initialN: initialN ?? this.#basicAlphabet.length,
 			delimiter: basicAlphabet.indexOf(delimiter),
+			isBasicCharacter: codepoint => codepoint < this.#basicAlphabet.length,
 			...algorithmParams
+		}
+
+		if (delimiter in base.values) {
+			throw new Error('Delimiter must not used as digit')
+		}
+
+		if (this.#base.digits.some(digits =>
+			digits.some(digit => !this.#basicAlphabet.has(digit))
+		)) {
+			throw new Error("Base's digits must all be part of base alphabet")
+		}
+
+		for (const ch of this.#basicAlphabet) {
+			if (!this.#extendedAlphabet.has(ch)) {
+				throw new Error("Basic alphabet isn't a subset of extended alphabet")
+			}
 		}
 
 		validateParams(this.#algorithmParams)
@@ -80,11 +97,11 @@ export class Bootstring {
 			throw new Error('Invalid digit')
 		}
 
-		return this.#base.digits[digit][0].codePointAt(0)!
+		return this.#basicAlphabet.indexOf(this.#base.digits[digit][0])
 	}
 
 	readonly #getDigit = (codepoint: number): number => {
-		const ch = String.fromCodePoint(codepoint)
+		const ch = this.#basicAlphabet.getAt(codepoint)
 
 		if (!(ch in this.#base.values)) {
 			throw new Error(`Invalid digit [${ch}] codepoint: ${codepoint}`)
@@ -94,16 +111,22 @@ export class Bootstring {
 	}
 
 	#codepointsString(string: string): CodepointsString {
+		const that = this
+
 		return Array.from((function* (): Iterable<number> {
 			for (const ch of string) {
-				yield ch.codePointAt(0)!
+				yield that.#basicAlphabet.has(ch)
+					? that.#basicAlphabet.indexOf(ch)
+					: that.#extendedAlphabet.indexOf(ch)
 			}
 		})())
 	}
 
 	#parseCodepointsString(string: CodepointsString): string {
 		return string
-			.map(codepoint => String.fromCodePoint(codepoint))
+			.map(codepoint => codepoint < this.#basicAlphabet.length
+				? this.#basicAlphabet.getAt(codepoint)
+				: this.#extendedAlphabet.getAt(codepoint))
 			.join('')
 	}
 }
