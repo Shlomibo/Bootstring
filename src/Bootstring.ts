@@ -65,7 +65,7 @@ export class Bootstring {
 	}
 
 	public encode(string: string): string {
-		const codepoints = this.#codepointsString(string)
+		const codepoints = this.#codepointsString(string, { basicAlphabet: false })
 
 		const encodedCodepoints = encode({
 			string: codepoints,
@@ -73,11 +73,11 @@ export class Bootstring {
 			...this.#algorithmParams,
 		})
 
-		return this.#parseCodepointsString(encodedCodepoints)
+		return this.#parseCodepointsString(encodedCodepoints, { basicAlphabet: true })
 	}
 
 	public decode(string: string): string {
-		const codepoints = this.#codepointsString(string)
+		const codepoints = this.#codepointsString(string, { basicAlphabet: true })
 
 		const encodedCodepoints = decode({
 			string: codepoints,
@@ -85,7 +85,7 @@ export class Bootstring {
 			...this.#algorithmParams,
 		})
 
-		return this.#parseCodepointsString(encodedCodepoints)
+		return this.#parseCodepointsString(encodedCodepoints, { basicAlphabet: false })
 	}
 
 	readonly #getCodepoint = (digit: number): number => {
@@ -110,23 +110,27 @@ export class Bootstring {
 		return this.#base.values[ch]
 	}
 
-	#codepointsString(string: string): CodepointsString {
+	#codepointsString(string: string, { basicAlphabet }: EncodingSource): CodepointsString {
 		const that = this
 
 		return Array.from((function* (): Iterable<number> {
 			for (const ch of string) {
-				yield that.#basicAlphabet.has(ch)
+				yield basicAlphabet
 					? that.#basicAlphabet.indexOf(ch)
 					: that.#extendedAlphabet.indexOf(ch)
 			}
 		})())
 	}
 
-	#parseCodepointsString(string: CodepointsString): string {
+	#parseCodepointsString(string: CodepointsString, { basicAlphabet }: EncodingSource): string {
 		return string
-			.map(codepoint => codepoint < this.#basicAlphabet.length
+			.map(codepoint => basicAlphabet
 				? this.#basicAlphabet.getAt(codepoint)
 				: this.#extendedAlphabet.getAt(codepoint))
 			.join('')
 	}
+}
+
+interface EncodingSource {
+	basicAlphabet: boolean
 }

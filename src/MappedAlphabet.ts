@@ -24,14 +24,8 @@ export class MappedAlphabet implements Alphabet {
 				.map(([baseChar, outputChar]) => [outputChar, baseChar])
 		)
 
-		this.#mapping = {
-			...reverseMapping,
-			...mapping,
-		}
-		this.#reverseMapping = {
-			...mapping,
-			...reverseMapping,
-		}
+		this.#mapping = mapping
+		this.#reverseMapping = reverseMapping
 
 		if (Object.keys(this.#mapping).length !== Object.keys(this.#reverseMapping).length) {
 			throw new Error('Mapped keys must have 1-1 correspondence')
@@ -66,11 +60,10 @@ export class MappedAlphabet implements Alphabet {
 
 	public *[Symbol.iterator]() {
 		for (const ch of this.#base) {
-			if (!(ch in this.#mapping)) {
-				throw new Error(`Failed to get character mapping for [${ch}], codepoint: ${ch.codePointAt(0)}`)
-			}
 
-			yield this.#mapping[ch]
+			yield ch in this.#mapping
+				? this.#mapping[ch]
+				: ch
 		}
 	}
 }

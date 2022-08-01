@@ -7,27 +7,72 @@ import { UnicodeSubsetAlphabet } from './UnicodeSubsetAlphabet'
 
 const delimiter = 'X'
 const logicalIdValidCharsCount = (26 * 2) + 10
-const charactersMapping: Record<string, string> = Object.fromEntries(
-	Array.from({ length: logicalIdValidCharsCount }, (_, i) => {
-		const base: number =
-			i < 10 ? '0'.codePointAt(0)! :
-				i < 36 ? 'A'.codePointAt(0)! - 10 :
-					'a'.codePointAt(0)! - 36
+const baseCharacterMapping: Record<string, string> = Object.fromEntries({
+	*[Symbol.iterator]() {
+		let i = 0
 
-		return [
-			String.fromCodePoint(i),
-			String.fromCodePoint(i + base)
-		]
+		for (; i < 10; i++) {
+			yield [
+				String.fromCodePoint(i),
+				String.fromCodePoint(i + '0'.codePointAt(0)!)
+			]
+		}
+
+		for (; i < 10 + 26; i++) {
+			yield [
+				String.fromCodePoint(i),
+				String.fromCodePoint(i + - 10 + 'A'.codePointAt(0)!)
+			]
+		}
+
+		for (; i < 10 + (26 * 2); i++) {
+			yield [
+				String.fromCodePoint(i),
+				String.fromCodePoint(i + - 36 + 'a'.codePointAt(0)!)
+			]
+		}
+	}
+})
+
+const fullCharacterMapping: Record<string, string> = {
+	...baseCharacterMapping,
+	...Object.fromEntries({
+		*[Symbol.iterator]() {
+			// Remap uppercase
+			for (let i = 0; i < 26; i++) {
+				yield [
+					String.fromCodePoint(i + 'A'.codePointAt(0)!),
+					String.fromCodePoint(i),
+				]
+			}
+
+			// Remap lowercase
+			for (let i = 0; i < 26; i++) {
+				const targetStart = 26
+				const targetSkipAt = '0'.codePointAt(0)!
+
+				const target = i + targetStart
+
+				yield [
+					String.fromCodePoint(i + 'a'.codePointAt(0)!),
+					String.fromCodePoint(
+						target < targetSkipAt
+							? target
+							: target + 10
+					),
+				]
+			}
+		}
 	})
-)
+}
 
 const logicalIdAlphabet = new MappedAlphabet({
 	base: new UnicodeSubsetAlphabet({ end: logicalIdValidCharsCount - 1 }),
-	mapping: charactersMapping,
+	mapping: baseCharacterMapping,
 })
 const remappedUnicode = new MappedAlphabet({
 	base: UnicodeSubsetAlphabet.unicode,
-	mapping: charactersMapping,
+	mapping: fullCharacterMapping,
 })
 
 const tests: Test[] = [{
@@ -35,17 +80,17 @@ const tests: Test[] = [{
 	encoded: 'LogicalId01X',
 	normalized: 'LogicalId01X',
 }, {
-	decoded: 'Some string with CpiTalS, spaces, punctuation_and-stuff 😳',
-	encoded: 'SomestringwithCpiTalSspacespunctuationandstuffXeJ6476JUBAA7c1jUbR4',
-	normalized: 'SomestringwithCpiTalSspacespunctuationandstuffXeJ6476JUBAA7c1jUbR4',
+	decoded: 'Some string with CapiTalS, spaces, punctuation_and-stuff 😳',
+	encoded: 'SomestringwithCapiTalSspacespunctuationandstuffX3R0g96486KbH70d1nuYU4',
+	normalized: 'SomestringwithCapiTalSspacespunctuationandstuffX3R0g96486KbH70d1nuYU4',
 }, {
-	decoded: JSON.stringify({ stringified: 'JS object' }, null, ' '),
-	encoded: 'stringifiedJSobjectXz0JjCB02a0B19sNn1v1',
-	normalized: 'stringifiedJSobjectXz0JjCB02a0B19sNn1v1',
+	decoded: JSON.stringify({ stringified: 'JS object' }, null, '\t'),
+	encoded: 'stringifiedJSobjectXz3KKfH2a0B19jAs1v1',
+	normalized: 'stringifiedJSobjectXz3KKfH2a0B19jAs1v1',
 }, {
 	decoded: 'אפילו עברית!',
-	encoded: 'P02Yo250IN3Kv0Fp0P',
-	normalized: 'P02Yo250IN3Kv0Fp0P',
+	encoded: 'g02um250IN3Kv0Fp0P',
+	normalized: 'g02um250IN3Kv0Fp0P',
 }, {
 	decoded: '\u0644\u064A\u0647\u0645\u0627\u0628\u062A\u0643\u0644\u0645\u0648\u0634' +
 		'\u0639\u0631\u0628\u064A\u061F',
@@ -69,8 +114,8 @@ const tests: Test[] = [{
 	normalized: 'lN206307OC1N4A747c1Q0n148b0',
 }, {
 	decoded: 'למה הם פשוט לא מדברים עברית',
-	encoded: 'P00000eT6801F41De0J2Y07DA5Bx1Y0a25Aj0',
-	normalized: 'P00000eT6801F41De0J2Y07DA5Bx1Y0a25Aj0',
+	encoded: 'g00000nQ6801F41De0J2Y07DA5Bx1Y0a25Aj0',
+	normalized: 'g00000nQ6801F41De0J2Y07DA5Bx1Y0a25Aj0',
 }, {
 	decoded: '\u092F\u0939\u0932\u094B\u0917\u0939\u093F\u0928\u094D\u0926\u0940\u0915' +
 		'\u094D\u092F\u094B\u0902\u0928\u0939\u0940\u0902\u092C\u094B\u0932\u0938\u0915' +
@@ -106,12 +151,12 @@ const tests: Test[] = [{
 	normalized: '3BXKwS0m2qlALgBCR4SiE',
 }, {
 	decoded: '\u5B89\u5BA4\u5948\u7F8E\u6075-with-SUPER-MONKEYS',
-	encoded: 'withSUPERMONKEYSXSC45xnu9vL3t9AaENCQ1',
-	normalized: 'withSUPERMONKEYSXSC45xnu9vL3t9AaENCQ1',
+	encoded: 'withSUPERMONKEYSXIF45Yiu9vL3t9AaENCQ1',
+	normalized: 'withSUPERMONKEYSXIF45Yiu9vL3t9AaENCQ1',
 }, {
 	decoded: `Hello-Another-Way-\u305D\u308C\u305E\u308C\u306E\u5834\u6240`,
-	encoded: 'HelloAnotherWayXoB73umo4K0v8xC1oUx4fqH',
-	normalized: 'HelloAnotherWayXoB73umo4K0v8xC1oUx4fqH',
+	encoded: 'HelloAnotherWayXTE73fho4K0v8xC1oUx4fqH',
+	normalized: 'HelloAnotherWayXTE73fho4K0v8xC1oUx4fqH',
 }, {
 	decoded: `\u3072\u3068\u3064\u5C4B\u6839\u306E\u4E0B2`,
 	encoded: '2XrzABPHadb0ZY7Ci7',
