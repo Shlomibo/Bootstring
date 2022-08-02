@@ -6,7 +6,9 @@ import { Test } from './Punycode.spec'
 import { UnicodeSubsetAlphabet } from './UnicodeSubsetAlphabet'
 
 const delimiter = 'X'
-const logicalIdValidCharsCount = (26 * 2) + 10
+// Capitals + lowercase + numerals
+const alphaNumericValidCharsCount = (26 * 2) + 10
+// Maps the lower ascii to alphanumeric
 const baseCharacterMapping: Record<string, string> = Object.fromEntries({
 	*[Symbol.iterator]() {
 		let i = 0
@@ -34,6 +36,8 @@ const baseCharacterMapping: Record<string, string> = Object.fromEntries({
 	}
 })
 
+// As before, but also maps lower and upper case letters back to lower ascii (so all
+// characters having representation)
 const fullCharacterMapping: Record<string, string> = {
 	...baseCharacterMapping,
 	...Object.fromEntries({
@@ -66,8 +70,8 @@ const fullCharacterMapping: Record<string, string> = {
 	})
 }
 
-const logicalIdAlphabet = new MappedAlphabet({
-	base: new UnicodeSubsetAlphabet({ end: logicalIdValidCharsCount - 1 }),
+const alphaNumericAlphabet = new MappedAlphabet({
+	base: new UnicodeSubsetAlphabet({ end: alphaNumericValidCharsCount - 1 }),
 	mapping: baseCharacterMapping,
 })
 const remappedUnicode = new MappedAlphabet({
@@ -179,15 +183,19 @@ const tests: Test[] = [{
 	normalized: '100X0s83Op176m0',
 }]
 
-describe('...', () => {
-	const awsLogicalIDsEncoder = new Bootstring({
-		base: new SimpleNthBase([...logicalIdAlphabet]
+describe('Given an encoder to strict alpha-numeric', () => {
+	// Our base use all the character but the delimiter (as it is forbidden for it being used
+	// as a digit)
+	// That is Base-61!
+	const alphaNumericEncoder = new Bootstring({
+		base: new SimpleNthBase([...alphaNumericAlphabet]
 			.filter(ch => !ch.includes(delimiter))
 			.map(ch => [ch])),
-		basicAlphabet: logicalIdAlphabet,
+		basicAlphabet: alphaNumericAlphabet,
 		extendedAlphabet: remappedUnicode,
 		delimiter,
 		tMin: 1,
+		// NAILED IT
 		tMax: 42,
 		skew: 38,
 		damp: 700,
@@ -198,7 +206,7 @@ describe('...', () => {
 		for (const { i, test: { decoded, normalized } } of tests.map((test, i) => ({ test, i }))) {
 			describe(`And a text with just ascii [${i}] (${decoded})`, () => {
 				it('Successfully encode strings', () => {
-					const encoded = awsLogicalIDsEncoder.encode(decoded)
+					const encoded = alphaNumericEncoder.encode(decoded)
 					expect(encoded).to.equal(normalized)
 				})
 			})
@@ -209,7 +217,7 @@ describe('...', () => {
 		for (const { i, test: { decoded, encoded } } of tests.map((test, i) => ({ test, i }))) {
 			describe(`And a text with just ascii [${i}] (${decoded})`, () => {
 				it('Successfully decode strings', () => {
-					const tested = awsLogicalIDsEncoder.decode(encoded)
+					const tested = alphaNumericEncoder.decode(encoded)
 					expect(tested).to.equal(decoded)
 				})
 			})
