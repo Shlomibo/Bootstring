@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { Bootstring } from './Bootstring'
 import { SimpleNthBase } from './common'
-import { MappedAlphabet } from './MappedAlphabet'
+import { FullyMappedAlphabet, MappedAlphabetParams, PartiallyMappedAlphabet } from './MappedAlphabet'
 import { Test } from './Punycode.spec'
 import { UnicodeSubsetAlphabet } from './UnicodeSubsetAlphabet'
 
@@ -70,11 +70,11 @@ const fullCharacterMapping: Record<string, string> = {
 	})
 }
 
-const alphaNumericAlphabet = new MappedAlphabet({
+const alphaNumericAlphabet = new FullyMappedAlphabet({
 	base: new UnicodeSubsetAlphabet({ end: alphaNumericValidCharsCount - 1 }),
 	mapping: baseCharacterMapping,
 })
-const remappedUnicode = new MappedAlphabet({
+const remappedUnicode = new PartiallyMappedAlphabet({
 	base: UnicodeSubsetAlphabet.unicode,
 	mapping: fullCharacterMapping,
 })
